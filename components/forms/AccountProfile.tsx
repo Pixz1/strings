@@ -1,6 +1,12 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
+import * as z from "zod";
+import Image from "next/image";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { ChangeEvent, useState } from "react";
+import { usePathname, useRouter } from "next/navigation";
+
 import {
     Form,
     FormControl,
@@ -11,15 +17,13 @@ import {
     FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { UserValidation } from "@/lib/validations/user";
-import * as z from "zod";
-import Image from "next/image";
-import { ChangeEvent, useState } from "react";
+
 import { isBase64Image } from "@/lib/utils";
 import { useUploadThing } from "@/lib/uploadthing";
+import { UserValidation } from "@/lib/validations/user";
+import { updateUser } from "@/lib/actions/user.actions";
 
 interface Props {
     user: {
@@ -34,10 +38,12 @@ interface Props {
 }
 
 const AccountProfile = ({ user, btnTitle }: Props) => {
+    const router = useRouter();
+    const pathname = usePathname();
     const [files, setFiles] = useState<File[]>([]);
     const { startUpload } = useUploadThing("media");
 
-    const form = useForm({
+    const form = useForm<z.infer<typeof UserValidation>>({
         resolver: zodResolver(UserValidation),
         defaultValues: {
             profile_photo: user?.image || "",
@@ -80,17 +86,33 @@ const AccountProfile = ({ user, btnTitle }: Props) => {
         if (hasImageChanged) {
             const imgRes = await startUpload(files);
 
+            console.log("Start upload");
             if (imgRes && imgRes[0].url) {
                 values.profile_photo = imgRes[0].url;
             }
+        }
+
+        await updateUser({
+            userId: user.id,
+            username: values.username,
+            name: values.name,
+            bio: values.bio,
+            image: values.profile_photo,
+            path: pathname,
+        });
+
+        if (pathname === "/profile.edit") {
+            router.back();
+        } else {
+            router.push("/");
         }
     };
 
     return (
         <Form {...form}>
             <form
-                onSubmit={form.handleSubmit(onSubmit)}
                 className="flex flex-col justify-start gap-10"
+                onSubmit={form.handleSubmit(onSubmit)}
             >
                 {/* profile photo field */}
                 <FormField
@@ -130,6 +152,8 @@ const AccountProfile = ({ user, btnTitle }: Props) => {
                                     }
                                 />
                             </FormControl>
+
+                            <FormMessage />
                         </FormItem>
                     )}
                 />
@@ -151,6 +175,8 @@ const AccountProfile = ({ user, btnTitle }: Props) => {
                                     {...field}
                                 />
                             </FormControl>
+
+                            <FormMessage />
                         </FormItem>
                     )}
                 />
@@ -172,6 +198,8 @@ const AccountProfile = ({ user, btnTitle }: Props) => {
                                     {...field}
                                 />
                             </FormControl>
+
+                            <FormMessage />
                         </FormItem>
                     )}
                 />
@@ -193,12 +221,14 @@ const AccountProfile = ({ user, btnTitle }: Props) => {
                                     {...field}
                                 />
                             </FormControl>
+
+                            <FormMessage />
                         </FormItem>
                     )}
                 />
 
                 <Button type="submit" className="bg-primary-500">
-                    Submit
+                    {btnTitle}
                 </Button>
             </form>
         </Form>
