@@ -5,11 +5,12 @@ import { sidebarLinks } from "@/constants";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
-import { SignOutButton, SignedIn } from "@clerk/clerk-react";
+import { SignOutButton, SignedIn, useAuth } from "@clerk/clerk-react";
 
 const LeftSideBar = () => {
     const router = useRouter();
     const pathname = usePathname();
+    const { userId } = useAuth();
 
     return (
         <section className="custom-scrollbar leftsidebar">
@@ -21,6 +22,10 @@ const LeftSideBar = () => {
                         (pathname.includes(link.route) &&
                             link.route.length > 1) ||
                         pathname === link.route;
+
+                    // adds user id to path after profile
+                    if (link.route === "/profile")
+                        link.route = `${link.route}/${userId}`;
 
                     return (
                         <Link
