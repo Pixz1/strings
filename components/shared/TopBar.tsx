@@ -19,7 +19,7 @@ const TopBar = () => {
                     height={28}
                 />
                 <p className="text-heading3-bold text-light-1 max-xs:hidden">
-                    Strings
+                    Threads
                 </p>
             </Link>
 
